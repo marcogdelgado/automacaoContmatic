@@ -1,0 +1,29 @@
+{
+    "coordinates": {
+        "server": {
+            "tactusSP": {
+                "x": "700",
+                "y": "140"
+            },
+            "tactusBH": {
+                "x": "700",
+                "y": "140"
+            }
+        },
+        "inputFilter": {
+            "x": "400",
+            "y": "167"
+        },
+        "btnFolderScan": {
+            "x": "400",
+            "y": "283"
+        },
+        "btnFolderContador": {
+            "x": "400",
+            "y": "257"
+        }
+    },
+
+    "pathExecutableAhk" : "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe",
+    "pathEntrada": "C:\\Users\\Amanda\\Documents\\robos\\automacaoContmatic\\entrada"
+}
