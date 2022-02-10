@@ -1,15 +1,19 @@
 import CreateBrowser from './CreateBrowser/CreateBrowser'
 import { config } from 'dotenv'
 import { parse, join } from 'path'
-import { mkdirSync } from 'fs'
+import { mkdirSync, unlink } from 'fs'
 import { execute } from './components/ahk/executeFile'
 import { CaptchaBalanceError } from './errors/CaptchaBalanceError'
 import { rename, zipDirectory } from './renameFile'
 import { workerData } from 'worker_threads'
+import { sendZip } from './components/sendZip'
+import { remove } from 'fs-extra'
 
 async function main () {
   const inputPath = join(process.cwd(), 'entrada')
   const outputPath = join(process.cwd(), 'saida')
+  remove(inputPath)
+  remove(outputPath)
   try {
     config({ path: join(parse(__dirname).dir, '.env') })
     mkdirSync(join(process.cwd(), 'saida'), { recursive: true })
@@ -29,6 +33,8 @@ async function main () {
     rename(inputPath, outputPath, workerData.codigos, workerData.anos, workerData.mes)
     console.log(process.cwd())
     await zipDirectory(outputPath, join(process.cwd(), 'arquivos.zip'))
+
+    await sendZip(join(process.cwd(), 'arquivos.zip'))
 
     return { status: true }
   } catch (error) {
