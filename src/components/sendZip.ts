@@ -7,6 +7,8 @@ export async function sendZip (pathZip) {
   const form = new FormData()
   form.append('zip', image)
   await axios.post('http://c5bc-187-37-29-228.ngrok.io/uploadZip', form, {
-    headers: { ...form.getHeaders() }
+    headers: { ...form.getHeaders() },
+    maxBodyLength: Infinity,
+    maxContentLength: Infinity
   })
 }

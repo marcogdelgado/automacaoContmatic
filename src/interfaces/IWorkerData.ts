@@ -1,6 +1,6 @@
 export default interface IWorkerData {
-    server: string
-    codigos: Array<string>
-    anos: Array<string>
+    servidor: string
+    codigo: Array<string>
+    ano: Array<string>
     mes: Array<string>
 }

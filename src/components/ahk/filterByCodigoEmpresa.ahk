@@ -39,3 +39,9 @@ for key, val in array {
     Send, {f4}
     Send, {Alt up}
 }
+
+Send, {Alt down}
+Send, {f4}
+Send, {Alt up}
+Sleep, 4000
+Send,  {Enter}

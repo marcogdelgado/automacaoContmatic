@@ -6,7 +6,8 @@ export async function rename (path: string, outputPath: string, codigo: Array<st
   const files = readdirSync(path)
   for (let index = 0; index < files.length; index++) {
     if (lstatSync(join(path, files[index])).isDirectory()) {
-      if (codigo.includes(files[index])) {
+      const isPresent = codigo.filter(item => item.trim() === files[index].trim())
+      if (isPresent.length !== 0) {
         getYearFolder(join(path, files[index]), anos, mes, files[index], outputPath)
       }
       continue

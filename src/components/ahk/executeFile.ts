@@ -7,10 +7,10 @@ import CONFIG from './config.json'
 export function execute (workerData: IWorkerData) {
   const pathTemp = join(__dirname, 'temp')
   mkdirSync(pathTemp, { recursive: true })
-  selectServidor(workerData.server, pathTemp)
+  selectServidor(workerData.servidor, pathTemp)
   findScanFolder(pathTemp)
   findContadorFolder(pathTemp)
-  filterByCodigoEmpresa(workerData.codigos, pathTemp)
+  filterByCodigoEmpresa(workerData.codigo, pathTemp)
   remove(pathTemp)
   console.log('terminou')
 }
