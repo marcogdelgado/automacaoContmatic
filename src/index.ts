@@ -1,20 +1,19 @@
 import CreateBrowser from './CreateBrowser/CreateBrowser'
 import { config } from 'dotenv'
 import { parse, join } from 'path'
-import { mkdirSync, unlink } from 'fs'
+import { mkdirSync } from 'fs'
 import { execute } from './components/ahk/executeFile'
 import { CaptchaBalanceError } from './errors/CaptchaBalanceError'
 import { rename, zipDirectory } from './renameFile'
-import { isMainThread, Worker, workerData } from 'worker_threads'
+import { workerData } from 'worker_threads'
 import { sendZip } from './components/sendZip'
 import { remove } from 'fs-extra'
-import clearPath from './clearPath'
 
-async function main() {
+async function main () {
   const parentDir = join(parse(__dirname).dir)
   const inputPath = join(parentDir, 'entrada')
   const outputPath = join(parentDir, 'saida')
-  //clearPath(inputPath, outputPath)
+  // clearPath(inputPath, outputPath)
   await remove(inputPath)
   await remove(outputPath)
   try {
@@ -61,5 +60,5 @@ async function main() {
   //   })
   // } else {
   await main()
-  //}
+  // }
 })()

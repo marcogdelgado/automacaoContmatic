@@ -2,12 +2,13 @@ import { copyFileSync, createWriteStream, existsSync, lstatSync, mkdirSync, read
 import { join } from 'path'
 import archiver from 'archiver'
 import extract from 'extract-zip'
-export async function rename (path: string, outputPath: string, codigo: Array<string>, anos: Array<string>, mes : Array<string>) {
+export async function rename (path: string, outputPath: string, codigo: Array<string>, anos: Array<string>, mes: Array<string>) {
   const files = readdirSync(path)
   for (let index = 0; index < files.length; index++) {
     if (lstatSync(join(path, files[index])).isDirectory()) {
       const isPresent = codigo.filter(item => item.trim() === files[index].trim())
       if (isPresent.length !== 0) {
+        mkdirSync(join(outputPath, files[index]))
         getYearFolder(join(path, files[index]), anos, mes, files[index], outputPath)
       }
       continue
@@ -18,7 +19,7 @@ export async function rename (path: string, outputPath: string, codigo: Array<st
   }
 }
 
-function getYearFolder (path: string, anos: Array<string>, mes: Array<string>, codigo : string, outputPath) {
+function getYearFolder (path: string, anos: Array<string>, mes: Array<string>, codigo: string, outputPath) {
   const years = readdirSync(path)
   for (let index = 0; index < years.length; index++) {
     if (anos.includes(years[index])) {
@@ -29,7 +30,7 @@ function getYearFolder (path: string, anos: Array<string>, mes: Array<string>, c
   }
 }
 
-function getMonths (path: string, ano: string, mes: Array<string>, codigo : string, outputPath) {
+function getMonths (path: string, ano: string, mes: Array<string>, codigo: string, outputPath) {
   const months = readdirSync(path)
   for (let index = 0; index < months.length; index++) {
     if (mes.includes(months[index])) {
@@ -40,7 +41,7 @@ function getMonths (path: string, ano: string, mes: Array<string>, codigo : stri
   }
 }
 
-function getFolhaFolder (path: string, ano : string, mes: string, codigo: string, outputPath) {
+function getFolhaFolder (path: string, ano: string, mes: string, codigo: string, outputPath) {
   const files = readdirSync(path)
   for (let index = 0; index < files.length; index++) {
     if (files[index] === 'Folha') {
@@ -49,17 +50,16 @@ function getFolhaFolder (path: string, ano : string, mes: string, codigo: string
   }
 }
 
-function handlerFolhaFolder (path : string, ano: string, mes : string, codigo : string, outputPath) {
+function handlerFolhaFolder (path: string, ano: string, mes: string, codigo: string, outputPath) {
   const files = readdirSync(path)
   for (let index = 0; index < files.length; index++) {
     if (lstatSync(join(path, files[index])).isDirectory()) {
       return handlerFolhaFolder(join(path, files[index]), ano, mes, codigo, outputPath)
     }
 
-    mkdirSync(path.replace('entrada', 'saida'), { recursive: true })
-    copyRecursiveSync(join(path, files[index]), join(path.replace('entrada', 'saida'), files[index]))
-    const name = join(path.replace('entrada', 'saida'), `${codigo}_${ano}_${mes}_${files[index]}`)
-    renameSync(join(path.replace('entrada', 'saida'), files[index]), name)
+    copyRecursiveSync(join(path, files[index]), join(outputPath, codigo, files[index]))
+    const name = join(outputPath, codigo, `${codigo}_${ano}_${mes}_${files[index]}`)
+    renameSync(join(outputPath, codigo, files[index]), name)
   }
 }
 
