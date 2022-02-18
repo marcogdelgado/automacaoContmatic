@@ -8,14 +8,18 @@ export async function rename (path: string, outputPath: string, codigo: Array<st
     if (lstatSync(join(path, files[index])).isDirectory()) {
       const isPresent = codigo.filter(item => item.trim() === files[index].trim())
       if (isPresent.length !== 0) {
-        mkdirSync(join(outputPath, files[index]))
+        try {
+          mkdirSync(join(outputPath, files[index]))
+        } catch (error) {
+          console.log('PASTA JA EXISTE')
+        }
         getYearFolder(join(path, files[index]), anos, mes, files[index], outputPath)
       }
       continue
     }
     await extractZip(join(path, files[index]), path)
     unlinkSync(join(path, files[index]))
-    return rename(path, outputPath, codigo, anos, mes)
+    return await rename(path, outputPath, codigo, anos, mes)
   }
 }
 
@@ -44,9 +48,7 @@ function getMonths (path: string, ano: string, mes: Array<string>, codigo: strin
 function getFolhaFolder (path: string, ano: string, mes: string, codigo: string, outputPath) {
   const files = readdirSync(path)
   for (let index = 0; index < files.length; index++) {
-    if (files[index] === 'Folha') {
-      handlerFolhaFolder(join(path, files[index]), ano, mes, codigo, outputPath)
-    }
+    handlerFolhaFolder(join(path, files[index]), ano, mes, codigo, outputPath)
   }
 }
 
@@ -54,7 +56,8 @@ function handlerFolhaFolder (path: string, ano: string, mes: string, codigo: str
   const files = readdirSync(path)
   for (let index = 0; index < files.length; index++) {
     if (lstatSync(join(path, files[index])).isDirectory()) {
-      return handlerFolhaFolder(join(path, files[index]), ano, mes, codigo, outputPath)
+      handlerFolhaFolder(join(path, files[index]), ano, mes, codigo, outputPath)
+      continue
     }
 
     copyRecursiveSync(join(path, files[index]), join(outputPath, codigo, files[index]))
