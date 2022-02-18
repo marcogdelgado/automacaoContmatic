@@ -5,7 +5,7 @@ import { mkdirSync } from 'fs'
 import { execute } from './components/ahk/executeFile'
 import { CaptchaBalanceError } from './errors/CaptchaBalanceError'
 import { rename, zipDirectory } from './renameFile'
-import { workerData } from 'worker_threads'
+import { isMainThread, Worker, workerData } from 'worker_threads'
 import { sendZip } from './components/sendZip'
 import { remove } from 'fs-extra'
 
@@ -13,7 +13,7 @@ async function main () {
   const parentDir = join(parse(__dirname).dir)
   const inputPath = join(parentDir, 'entrada')
   const outputPath = join(parentDir, 'saida')
-  // clearPath(inputPath, outputPath)
+
   await remove(inputPath)
   await remove(outputPath)
   try {
@@ -29,12 +29,14 @@ async function main () {
     await page.waitForSelector('body > div.divFundoAmbiente > div.divCampos > a:nth-child(1) > button').catch(e => '')
     await page.click('body > div.install > div.divFundoConcluido > div.divCampos > a.continue-login > button').catch(e => '')
     await page.click('body > div.divFundoAmbiente > div.divCampos > a:nth-child(1) > button').catch(e => '')
-    await page.waitForTimeout(120000)
+    await page.waitForTimeout(20000)
     await newBrowser.closeAll(browser)
 
     await execute(workerData)
+    console.log('iniciando rename')
+    console.log(workerData.codigo)
     await rename(inputPath, outputPath, workerData.codigo, workerData.anos, workerData.mes)
-
+    console.log('terminou rename')
     await zipDirectory(outputPath, join(parentDir, 'arquivos.zip'))
 
     await sendZip(join(parentDir, 'arquivos.zip'))
@@ -53,7 +55,7 @@ async function main () {
   //   const w = new Worker(__filename, {
   //     workerData: {
   //       servidor: 'tactusSP',
-  //       codigo: ['688', '100'],
+  //       codigo: ['688', '1688'],
   //       anos: ['2022', '2021', '2020'],
   //       mes: ['01', '02', '03']
   //     }

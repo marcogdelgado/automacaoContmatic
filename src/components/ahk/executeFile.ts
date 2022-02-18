@@ -2,6 +2,7 @@ import { execSync } from 'child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { remove } from 'fs-extra'
 import { join } from 'path'
+import { workerData } from 'worker_threads'
 import IWorkerData from '../../interfaces/IWorkerData'
 import CONFIG from './config.json'
 export function execute (workerData: IWorkerData) {
@@ -10,7 +11,8 @@ export function execute (workerData: IWorkerData) {
   selectServidor(workerData.servidor, pathTemp)
   findScanFolder(pathTemp)
   findContadorFolder(pathTemp)
-  filterByCodigoEmpresa(workerData.codigo, pathTemp)
+  const codigos = filterCodigos(workerData.codigo.sort((a, b) => parseInt(a) - parseInt(b)), [], [])
+  filterByCodigoEmpresa(codigos, pathTemp)
   remove(pathTemp)
   console.log('terminou')
 }
@@ -58,4 +60,29 @@ function filterByCodigoEmpresa (codigos: Array<string>, pathTemp: string) {
 
   writeFileSync(join(__dirname, 'temp', 'filterByCodigoEmpresa.ahk'), contentSelectServerAHK)
   execSync(`"${CONFIG.pathExecutableAhk}" ${join(pathTemp, 'filterByCodigoEmpresa.ahk')}`)
+}
+
+function filterCodigos (array: Array<string>, newArray: Array<string>, originalArray : Array<string>) {
+  if (array.length === 0) {
+    workerData.codigo = originalArray
+    return newArray
+  }
+
+  const first = array.shift()
+  originalArray.push(first)
+  let find = false
+  array.forEach((item, index) => {
+    originalArray.push(item)
+    if (item.includes(first)) {
+      newArray.push(first)
+      delete array[index]
+      find = true
+    }
+  })
+
+  if (!find) {
+    newArray.push(first)
+  }
+
+  return filterCodigos(array.filter(item => item !== ''), newArray, originalArray)
 }

@@ -9,8 +9,8 @@ export default class CreateBrowser {
     this.browser = await puppeteer.launch(CONFIG)
     this.page = await this.browser.newPage()
 
-    this.page.setDefaultTimeout(80000)
-    this.page.setDefaultNavigationTimeout(80000)
+    this.page.setDefaultTimeout(30000)
+    this.page.setDefaultNavigationTimeout(30000)
 
     await this.page.setViewport(CONFIG.defaultViewport)
 
