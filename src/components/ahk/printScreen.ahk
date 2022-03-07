@@ -1,0 +1,1 @@
+Run,"C:\Program Files\IrfanView\i_view64.exe" /capture=1 /convert={path_screenshot}
