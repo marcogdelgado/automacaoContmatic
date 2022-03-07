@@ -13,7 +13,6 @@ async function main () {
   const parentDir = join(parse(__dirname).dir)
   const inputPath = join(parentDir, 'entrada')
   const outputPath = join(parentDir, 'saida')
-
   await remove(inputPath)
   await remove(outputPath)
   try {
@@ -34,7 +33,6 @@ async function main () {
 
     await execute(workerData)
     console.log('iniciando rename')
-    console.log(workerData.codigo)
     await rename(inputPath, outputPath, workerData.codigo, workerData.anos, workerData.mes)
     console.log('terminou rename')
     await zipDirectory(outputPath, join(parentDir, 'arquivos.zip'))
