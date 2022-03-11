@@ -5,11 +5,12 @@ import { mkdirSync } from 'fs'
 import { execute } from './components/ahk/executeFile'
 import { CaptchaBalanceError } from './errors/CaptchaBalanceError'
 import { rename, zipDirectory } from './renameFile'
-import { isMainThread, Worker, workerData } from 'worker_threads'
 import { sendZip } from './components/sendZip'
 import { remove } from 'fs-extra'
+import { fork } from 'child_process'
 
 async function main () {
+  const workerData = JSON.parse(process.argv[3])
   const parentDir = join(parse(__dirname).dir)
   const inputPath = join(parentDir, 'entrada')
   const outputPath = join(parentDir, 'saida')
@@ -49,16 +50,16 @@ async function main () {
   }
 }
 (async () => {
-  // if (isMainThread) {
-  //   const w = new Worker(__filename, {
-  //     workerData: {
-  //       servidor: 'tactusSP',
-  //       codigo: ['688', '1688'],
-  //       anos: ['2022', '2021', '2020'],
-  //       mes: ['01', '02', '03']
-  //     }
-  //   })
-  // } else {
-  await main()
-  // }
+  if (process.argv[2] === 'child') {
+    await main()
+  }
+  const c = fork(__filename, ['child', JSON.stringify({
+    servidor: 'tactusSP',
+    codigo: ['1500', '1291', '763'],
+    anos: ['2022', '2021', '2020'],
+    mes: ['01', '02', '03']
+  })])
+  c.on('exit', () => {
+    console.log('parou')
+  })
 })()

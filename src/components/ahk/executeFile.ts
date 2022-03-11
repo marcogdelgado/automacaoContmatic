@@ -1,12 +1,12 @@
 import { execSync } from 'child_process'
-import { mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'fs'
 import { remove } from 'fs-extra'
 import { join } from 'path'
 import pixelmatch from 'pixelmatch'
 import { PNG } from 'pngjs'
 import IWorkerData from '../../interfaces/IWorkerData'
 import CONFIG from './config.json'
-import { workerData } from 'worker_threads'
+// import { workerData } from 'worker_threads'
 import resizePrint from '../resizePrint'
 
 import { setTimeout } from 'timers/promises'
@@ -23,18 +23,20 @@ export async function execute (workerData: IWorkerData) {
   findScanFolder(pathTemp)
   findContadorFolder(pathTemp)
   setLimitFolders(pathTemp)
-  const codigos = filterCodigos(workerData.codigo.sort((a, b) => parseInt(a) - parseInt(b)), [], [])
+  const codigos = filterCodigos([...workerData.codigo.sort((a, b) => parseInt(a) - parseInt(b))])
   for (let index = 0; index < codigos.length; index++) {
     filterByCodigoEmpresa(codigos[index], pathTemp)
     selectFirstFolder(pathTemp)
     selectFolders(pathTemp)
     copieFolders(pathTemp)
     await waitForDownload(pathScreenshot, pathTemp)
-    pasteFolders(pathTemp)
+    await pasteFolders(pathTemp)
+    // waitForPaste(pathTemp)
     initNextFolder(pathTemp)
     selectFolders(pathTemp)
     await printScreen(pathScreenshot, 'screen1', pathTemp)
     let i = 2
+
     while (true) {
       selectFolders(pathTemp)
       await printScreen(pathScreenshot, 'screen' + i.toString(), pathTemp)
@@ -50,14 +52,23 @@ export async function execute (workerData: IWorkerData) {
       renameSync(image2, image1)
       copieFolders(pathTemp)
       await waitForDownload(pathScreenshot, pathTemp)
-      pasteFolders(pathTemp)
+      await pasteFolders(pathTemp)
+      // waitForPaste(pathTemp)
       initNextFolder(pathTemp)
       i++
     }
   }
+  closeExplorer(pathTemp)
   closeProgram(pathTemp)
   await remove(pathTemp)
   await remove(pathScreenshot)
+}
+
+function closeExplorer (pathTemp) {
+  const path = join(__dirname, 'closeExplorer.ahk')
+  const content = readFileSync(path).toString()
+  writeFileSync(join(__dirname, 'temp', 'closeExplorer.ahk'), content)
+  execSync(`"${CONFIG.pathExecutableAhk}" ${join(pathTemp, 'closeExplorer.ahk')}`)
 }
 
 function closeProgram (pathTemp: string) {
@@ -147,11 +158,17 @@ function copieFolders (pathTemp) {
   execSync(`"${CONFIG.pathExecutableAhk}" ${join(pathTemp, 'copieFolders.ahk')}`)
 }
 
-function pasteFolders (pathTemp) {
+async function pasteFolders (pathTemp) {
+  // return new Promise<void>(async (resolve, reject) => {
   const path = join(__dirname, 'pasteFolders.ahk')
   const content = readFileSync(path).toString()
   writeFileSync(join(pathTemp, 'pasteFolders.ahk'), content)
   execSync(`"${CONFIG.pathExecutableAhk}" ${join(pathTemp, 'pasteFolders.ahk')}`)
+  await waitForDialogCopie(pathTemp)
+  await waitForPaste(pathTemp)
+  closeExplorer(pathTemp)
+  //  resolve()
+  // })
 }
 
 function compareImages (image1, image2) {
@@ -183,17 +200,14 @@ function filterByCodigoEmpresa (codigo: string, pathTemp: string) {
   execSync(`"${CONFIG.pathExecutableAhk}" ${join(pathTemp, 'filterByCodigoEmpresa.ahk')}`)
 }
 
-function filterCodigos (array: Array<string>, newArray: Array<string>, originalArray : Array<string>) {
+function filterCodigos (array: Array<string>, newArray: Array<string> = []) {
   if (array.length === 0) {
-    workerData.codigo = originalArray
     return newArray
   }
 
   const first = array.shift()
-  originalArray.push(first)
   let find = false
   array.forEach((item, index) => {
-    originalArray.push(item)
     if (item.includes(first)) {
       newArray.push(first)
       delete array[index]
@@ -205,7 +219,7 @@ function filterCodigos (array: Array<string>, newArray: Array<string>, originalA
     newArray.push(first)
   }
 
-  return filterCodigos(array.filter(item => item !== ''), newArray, originalArray)
+  return filterCodigos(array.filter(item => item !== ''), newArray)
 }
 
 async function printAreaDownloadProgressBar (pathScreenshot, pathTemp) {
@@ -237,4 +251,52 @@ async function waitForDownload (pathScreenshot, pathTemp) {
 
   await setTimeout(5000)
   return await waitForDownload(pathScreenshot, pathTemp)
+}
+
+async function waitForPaste (pathTemp) {
+  const path = join(__dirname, 'getAllWindowsTitle.ahk')
+  const randomBytesSync = promisify(randomBytes)
+  const randomName = (await randomBytesSync(12)).toString('hex')
+  const file = join(pathTemp, `${randomName}.txt`)
+  let content = readFileSync(path).toString()
+
+  content = content.replace('{path_file}', file)
+  writeFileSync(join(pathTemp, 'getAllWindowsTitle.ahk'), content)
+  execSync(`"${CONFIG.pathExecutableAhk}" ${join(pathTemp, 'getAllWindowsTitle.ahk')}`)
+  waitForFile(file)
+  content = readFileSync(file, { encoding: 'latin1' }).toString()
+  console.log(content)
+  if (content.includes('Copiando...')) {
+    console.log('ESTA COPIANDO')
+    await setTimeout(3000)
+    unlinkSync(file)
+    return await waitForPaste(pathTemp)
+  }
+  return true
+}
+
+async function waitForDialogCopie (pathTemp) {
+  const path = join(__dirname, 'getAllWindowsTitle.ahk')
+  const randomBytesSync = promisify(randomBytes)
+  const randomName = (await randomBytesSync(12)).toString('hex')
+  const file = join(pathTemp, `${randomName}.txt`)
+  let content = readFileSync(path).toString()
+
+  content = content.replace('{path_file}', file)
+  writeFileSync(join(pathTemp, 'getAllWindowsTitle.ahk'), content)
+  execSync(`"${CONFIG.pathExecutableAhk}" ${join(pathTemp, 'getAllWindowsTitle.ahk')}`)
+  waitForFile(file)
+  content = readFileSync(file, { encoding: 'latin1' }).toString()
+  if (!content.includes('Copiando...')) {
+    console.log('DIALOG FECHADO')
+    await setTimeout(3000)
+    unlinkSync(file)
+    return await waitForDialogCopie(pathTemp)
+  }
+  return true
+}
+
+function waitForFile (pathFile) {
+  if (!existsSync(pathFile)) { return waitForFile(pathFile) }
+  return true
 }
